@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "adam-implicit-bias-lr-schedule"
+version = "0.1.0"
+description = "Discrete Adam learning-rate-schedule experiments on homogeneous MNIST networks and directional dynamics"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26", "torch>=2.2", "torchvision>=0.17", "matplotlib>=3.8"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"

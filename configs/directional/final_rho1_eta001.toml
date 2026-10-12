@@ -1,0 +1,48 @@
+# Historical selected discrete-Adam setting (2026-10-06), WITHOUT limit formulas.
+# L counts homogeneous weight groups: u plus L-1 scalar factors.
+[model]
+layers = 3
+B = 2.0
+C = 1.0
+M = 128.0
+
+[initialization]
+rho = 1.0
+sampling = "grid"
+grid_size = 11  # 11^3 points in each of two paired sectors: 2662 trajectories
+sample_count = 256  # used only with sampling="random"
+seed = 0
+s_min = 0.0
+s_max = 14.556090791758852  # 3 log(128); explicit, not silently changed with M
+ell_min = -1.65
+ell_max = 1.65
+sectors = "both"  # swapping the u coordinates also swaps both input coordinates
+max_trajectories = 100000
+
+[optimizer]
+beta1 = 0.9
+beta2 = 0.999
+epsilon = 0.0  # added outside sqrt(v_hat)
+
+[schedule]
+initial_rate = 0.01
+power = 0.0  # eta_k = initial_rate * k^(-power), k=1,2,...; 0 means constant
+
+[run]
+steps = 400000
+dtype = "float64"
+device = "cpu"
+threads = 1
+output_dir = "runs/directional/final_rho1_eta001"
+
+[logging]
+every = 5000
+geometric_checkpoints = 80
+progress_every = 10000
+plots = true
+plot_trajectories = 12
+
+[numerics]
+stop_on_subnormal = true
+support_margin_cap = 250.0  # 0 disables; stopping here is a horizon, not convergence
+stagnation_patience = 0  # temporary rounded plateaus may restart; logged but not stopped
