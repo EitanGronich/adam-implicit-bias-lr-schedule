@@ -95,3 +95,5 @@ Resume checks the data, architecture, initialization, dynamics, diagnostic setti
 New runs refuse to overwrite existing checkpoints unless resume is enabled. Atomic replacement protects checkpoint writes; loss snapshots include size/hash checks, and RNG state is saved. A signal requests a checkpoint at the next evaluation boundary. Source hashes and commit information make changes reviewable; editing the runner, model, data preparation, optimizer, or enabled shadow code requires a new output directory rather than silently changing a trajectory on resume.
 
 The optional theory metadata labels schedule regions and conditional asymptotic guides. It does not prove parameter-direction convergence, a positive limiting margin, the manuscript's regularity assumptions, or that a finite run reached an asymptotic regime.
+
+A different Git commit is allowed on resume only when the nonempty computational source-hash maps match exactly; both commit IDs are recorded in `resume_migrations`. Documentation or plotting-only commits can therefore extend a run, while changed computational code and legacy checkpoints without hashes retain strict rejection.

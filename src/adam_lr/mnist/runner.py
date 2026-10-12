@@ -327,6 +327,22 @@ def validate_resume_signature(
     requested_remaining = dict(requested)
     migrations: list[str] = []
 
+    # Git also changes for documentation and plots. Exact nonempty hashes of
+    # every computational module, when available, are the resume authority.
+    saved_sources = saved_remaining.get("source_sha256")
+    requested_sources = requested_remaining.get("source_sha256")
+    if (
+        saved_remaining.get("git_commit") != requested_remaining.get("git_commit")
+        and isinstance(saved_sources, dict) and bool(saved_sources)
+        and saved_sources == requested_sources
+    ):
+        migrations.append(
+            f"git_commit:{saved_remaining.get('git_commit')}->"
+            f"{requested_remaining.get('git_commit')}:identical_computational_sources"
+        )
+        saved_remaining.pop("git_commit", None)
+        requested_remaining.pop("git_commit", None)
+
     if saved_remaining.get("target_loss") != requested_remaining.get("target_loss"):
         if not allow_target_extension:
             raise RuntimeError("checkpoint signature mismatch")

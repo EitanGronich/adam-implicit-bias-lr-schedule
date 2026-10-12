@@ -22,10 +22,10 @@ log-space moment recurrences; diagnostic scale invariance; frozen-metric
 support; incoming-trace integrity; and plotting integration.
 
 Run the suite with `python -m pytest -q`. The final local suite passed:
-**158 tests and 13 subtests**, in 58.36 seconds. An installable wheel was built
+**162 tests and 13 subtests**, in 65.75 seconds. An installable wheel was built
 and installed into an isolated target directory; both experiment modules ran
 from that installed package without importing the original research folders.
-The repository includes the corresponding Linux CI workflow.
+The [Linux CI workflow](https://github.com/EitanGronich/adam-implicit-bias-lr-schedule/actions) also installs the package and runs this suite. The initial extraction passed all 158 then-current tests and 13 subtests on Linux in 5.48 seconds; the final resume-only additions are covered by the subsequent run.
 
 ## MNIST executions
 
@@ -33,7 +33,7 @@ The repository includes the corresponding Linux CI workflow.
 |---|---|
 | Extraction regression: 32 real MNIST points, two hidden layers of width 12, 100 updates for each power 0, 0.25, 0.7 | Parameters, losses, logits, and both moment buffers were bitwise identical to the original implementation on identical supplied inputs. This comparison used a common pixel-minus-0.5 input array; canonical loader preprocessing was tested separately. |
 | Real-MNIST execution: 16 examples, 8 CPU updates | Completed; final mean logistic loss 0.6921136584. |
-| Production-shape execution: 1,024 examples, 784–1024–1024–1, float64 GPU, 4 updates, eta0=0.0003, beta2=0.999 | Completed; final loss 0.6923162076027729. This is an execution smoke, not a trained production result. |
+| Production-shape execution: 1,024 examples, 784–1024–1024–1, float64 GPU, 1,000 updates, eta0=0.0003, betas=(0.9,0.999), initialization scale 0.01 | Completed in 105 seconds; final loss 2.3769154936e-6. The 1e-4 anchor was reached at update 330. Sampled gradient-square underflow and second-moment subnormal counts were zero. This is a partial training validation, not the full production horizon. |
 | Loss-anchor exercise: 32 real examples, 784–128–128–1, eta=0.003, betas=(0.9,0.99), initialization scale 1 | Reached loss 9.9711980628e-13 at update 3,034. Crossed the three fixed anchors at updates 17, 43, and 3,034. Exercised coordinate/scalar logging, log-moment shadow, every-step incoming trace, persistent loss checkpoints, and plots. |
 
 The smaller anchor exercise is a diagnostic validation configuration; it is
