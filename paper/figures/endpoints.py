@@ -41,13 +41,13 @@ def render_grid(data, output, stem, long_horizon=False, formats=("pdf", "png")):
             # Mantissas and their multiplier preserve the weighted margins.
             shift = int(np.floor(np.log10(maximum)))
             factor, exponent = 10. ** -shift, int(exponents[row, reference]) + shift
+            # Sparse curves stay vector; rasterizing each panel retains full-page buffers.
             for trajectory, (x, values, mark) in enumerate(curves):
                 ax.plot(x, values * factor, color=list(colors.values())[row],
                         lw=1.1 if trajectory == reference else .9,
                         linestyle="-", marker=MARKERS[trajectory], markersize=3.1,
                         markerfacecolor="white", markeredgewidth=.75,
                         markevery=np.flatnonzero(mark).tolist(),
-                        rasterized=not long_horizon,
                         zorder=3 if trajectory == reference else 2)
             ax.format(abc=False, title="", xlim=(2 if long_horizon else 0, xmax),
                       xticks=xticks, ylim=(0, maximum * factor * 1.12), grid=True,

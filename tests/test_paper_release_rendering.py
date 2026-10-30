@@ -172,3 +172,19 @@ def test_newly_prepared_signed_margins_render_on_log_axes(tmp_path, monkeypatch,
             stem = "alpha_03_all_seeds"
     with pymupdf.open(tmp_path / f"{stem}.pdf") as document:
         assert len(document) == 1
+
+
+@pytest.mark.parametrize("epsilon", ["epsilon0", "epsilon1e8"])
+def test_sparse_endpoint_grids_export_without_raster_images(tmp_path, epsilon):
+    pytest.importorskip("ultraplot")
+    pymupdf = pytest.importorskip("pymupdf")
+    module("render")
+    from paper.figures.data import load_section
+    from paper.figures.endpoints import render_grid
+
+    data = load_section(ROOT / "paper/data/comparison.npz", f"endpoints_{epsilon}")
+    render_grid(data, tmp_path, epsilon, formats=("pdf",))
+    with pymupdf.open(tmp_path / f"{epsilon}.pdf") as document:
+        assert len(document) == 1
+        assert document[0].get_images() == []
+        assert document[0].rect.width * 25.4 / 72 == pytest.approx(183, abs=.2)
