@@ -12,18 +12,18 @@ if str(REPO) not in sys.path:
 
 FAMILIES = ("mnist", "epsilon", "endpoints", "error", "construction")
 ASSETS = {
-    "mnist": tuple("mnist/" + name + ".pdf" for name in (
-        "panel_loss_rate", "panel_linf_margin", "panel_frozen_margin",
-        "panel_frozen_margin_am07", "legend_schedules", "legend_seeds",
+    "mnist": tuple("eps0/" + name + ".pdf" for name in (
+        "panel_loss_rate", "panel_linf_margin", "panel_frozen_margin_a0",
+        "panel_frozen_margin_a07", "legend_schedules", "legend_seeds",
         "alpha_03_all_seeds")),
-    "epsilon": tuple("epsilon_1e8/" + name + ".pdf" for name in (
+    "epsilon": tuple("comparison/" + name + ".pdf" for name in (
         "panel_a", "panel_b", "panel_c", "panel_d", "legend_schedules",
         "legend_epsilon", "legend_seeds")),
-    "endpoints": ("mnist/epsilon0_jumbo.pdf",
-                  "epsilon_1e8/epsilon0_scale1_jumbo.pdf",
-                  "epsilon_1e8/epsilon1e8_scale1_jumbo.pdf"),
-    "error": ("epsilon_1e8/err.pdf",),
-    "construction": ("sphere.pdf", "adam_construction_tikz.pdf"),
+    "endpoints": ("eps0/epsilon0_jumbo.pdf",
+                  "comparison/epsilon0_scale1_jumbo.pdf",
+                  "comparison/epsilon1e8_scale1_jumbo.pdf"),
+    "error": ("comparison/err.pdf",),
+    "construction": ("schematic/sphere.pdf", "schematic/adam_construction_tikz.pdf"),
 }
 
 
@@ -72,7 +72,7 @@ def main(argv=None):
     if args.list:
         for family in selected:
             for asset in ASSETS[family]:
-                if not (args.skip_tex and asset == "adam_construction_tikz.pdf"):
+                if not (args.skip_tex and asset == "schematic/adam_construction_tikz.pdf"):
                     print("figures/" + asset)
         return
     data_dir = args.data_dir.resolve()
@@ -81,19 +81,19 @@ def main(argv=None):
     formats = ("pdf", "png") if args.format == "both" else ("pdf",)
     for family in selected:
         if family == "construction":
-            construction(data_dir, output, args.skip_tex, args.tex_engine, formats)
+            construction(data_dir, output / "schematic", args.skip_tex, args.tex_engine, formats)
         elif family == "mnist":
             from paper.figures.mnist import render
-            render(data_dir, output / "mnist", formats)
+            render(data_dir, output / "eps0", formats)
         elif family == "epsilon":
             from paper.figures.epsilon import render
-            render(data_dir, output / "epsilon_1e8", formats)
+            render(data_dir, output / "comparison", formats)
         elif family == "endpoints":
             from paper.figures.endpoints import render
             render(data_dir, output, formats)
         elif family == "error":
             from paper.figures.error import render
-            render(data_dir / "comparison.npz", output / "epsilon_1e8", formats)
+            render(data_dir / "comparison.npz", output / "comparison", formats)
         print(f"Rendered {family}: {output}", flush=True)
 
 

@@ -106,7 +106,7 @@ def render(data: Path, output: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", type=Path, default=DATA)
-    parser.add_argument("--output", type=Path, default=Path("output/paper/figures/sphere.pdf"))
+    parser.add_argument("--output", type=Path, default=Path("output/paper/figures/schematic/sphere.pdf"))
     args = parser.parse_args()
     render(args.data, args.output)
 

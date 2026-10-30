@@ -64,6 +64,9 @@ width-1 endpoint directions. Render the paper figures with:
 python paper/figures/render.py --output-dir output/paper
 ```
 
+Figures are written under `output/paper/figures/`, in the `eps0/`,
+`comparison/`, and `schematic/` directories used by the manuscript.
+
 The schematic requires XeLaTeX with TikZ and the `standalone` class. Add
 `--skip-tex` to render only numerical figures, or `--format both` for PNGs too.
 [Figure preparation](docs/paper.md) explains how to prepare the same plots from

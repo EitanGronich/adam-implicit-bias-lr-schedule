@@ -169,8 +169,8 @@ def render(data_dir, output, formats=("pdf", "png")):
         loss_rate(secants, output, formats, beta2=float(settings.get("beta2", .999)))
         linf_margin(load_section(archive, "linf"), output, formats)
         endpoints = load_section(archive, "endpoints")
-        weighted_margin(endpoints, 0, "c", "panel_frozen_margin", output, formats)
-        weighted_margin(endpoints, 4, "d", "panel_frozen_margin_am07", output, formats)
+        weighted_margin(endpoints, 0, "c", "panel_frozen_margin_a0", output, formats)
+        weighted_margin(endpoints, 4, "d", "panel_frozen_margin_a07", output, formats)
         handles = [Line2D([], [], color=color, lw=1.2) for color in colors.values()]
         handles.append(Line2D([], [], color=".25", lw=.9, linestyle=(0, (4, 2))))
         guide(handles, [rf"$\alpha={alpha:g}$" for alpha in colors] + [r"$-\ln(\beta_2)/2$"],

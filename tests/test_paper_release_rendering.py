@@ -61,14 +61,37 @@ def test_invalid_interior_samples_do_not_change_seed_cohort():
 
 def test_renderer_lists_exact_manuscript_assets(capsys):
     render = module("render")
+    expected = {
+        "figures/eps0/panel_loss_rate.pdf",
+        "figures/eps0/panel_linf_margin.pdf",
+        "figures/eps0/panel_frozen_margin_a0.pdf",
+        "figures/eps0/panel_frozen_margin_a07.pdf",
+        "figures/eps0/legend_schedules.pdf",
+        "figures/eps0/legend_seeds.pdf",
+        "figures/eps0/alpha_03_all_seeds.pdf",
+        "figures/eps0/epsilon0_jumbo.pdf",
+        "figures/comparison/panel_a.pdf",
+        "figures/comparison/panel_b.pdf",
+        "figures/comparison/panel_c.pdf",
+        "figures/comparison/panel_d.pdf",
+        "figures/comparison/legend_schedules.pdf",
+        "figures/comparison/legend_epsilon.pdf",
+        "figures/comparison/legend_seeds.pdf",
+        "figures/comparison/epsilon0_scale1_jumbo.pdf",
+        "figures/comparison/epsilon1e8_scale1_jumbo.pdf",
+        "figures/comparison/err.pdf",
+        "figures/schematic/sphere.pdf",
+        "figures/schematic/adam_construction_tikz.pdf",
+    }
     render.main(["--list"])
     paths = capsys.readouterr().out.splitlines()
-    assert len(paths) == len(set(paths)) == 20
-    assert "figures/mnist/alpha_03_all_seeds.pdf" in paths
-    assert "figures/epsilon_1e8/epsilon1e8_scale1_jumbo.pdf" in paths
-    assert "figures/adam_construction_tikz.pdf" in paths
+    assert len(paths) == len(expected)
+    assert set(paths) == expected
     render.main(["--list", "--skip-tex"])
-    assert len(capsys.readouterr().out.splitlines()) == 19
+    paths = capsys.readouterr().out.splitlines()
+    expected.remove("figures/schematic/adam_construction_tikz.pdf")
+    assert len(paths) == len(expected)
+    assert set(paths) == expected
 
 
 def test_error_bundle_uses_scale_one_and_five_seeds():

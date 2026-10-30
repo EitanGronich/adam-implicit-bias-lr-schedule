@@ -7,6 +7,18 @@ python paper/figures/render.py --output-dir output/paper
 ```
 
 The renderer writes the manuscript's 20 PDF assets under `output/paper/figures/`.
+The directory structure matches the paths used in the manuscript:
+
+| Directory | Figures |
+|---|---|
+| `figures/eps0/` | Zero-epsilon experiment, including individual-seed curves and endpoint grids |
+| `figures/comparison/` | Epsilon comparison, relative error, and endpoint grids |
+| `figures/schematic/` | Sphere experiment and Adam construction schematic |
+
+The weighted-margin panels are `eps0/panel_frozen_margin_a0.pdf` and
+`eps0/panel_frozen_margin_a07.pdf`. Run `python paper/figures/render.py --list`
+to list all manuscript PDF paths.
+
 Use `--family mnist`, `epsilon`, `error`, `endpoints`, or `construction` to select
 a group. Add `--format both` for PNGs. The TikZ schematic requires XeLaTeX;
 `--skip-tex` renders the numerical figures without it.

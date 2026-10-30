@@ -82,9 +82,9 @@ def render_grid(data, output, stem, long_horizon=False, formats=("pdf", "png")):
 
 def render(data_dir, output_dir, formats=("pdf", "png")):
     data_dir, output_dir = Path(data_dir), Path(output_dir)
-    render_grid(load_section(data_dir / "long_horizon.npz", "endpoints"), output_dir / "mnist",
+    render_grid(load_section(data_dir / "long_horizon.npz", "endpoints"), output_dir / "eps0",
                 "epsilon0_jumbo", long_horizon=True, formats=formats)
     for name in ("epsilon0", "epsilon1e8"):
         render_grid(load_section(data_dir / "comparison.npz", f"endpoints_{name}"),
-                    output_dir / "epsilon_1e8",
+                    output_dir / "comparison",
                     f"{name}_scale1_jumbo", formats=formats)
