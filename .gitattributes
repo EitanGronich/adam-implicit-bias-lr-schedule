@@ -3,3 +3,6 @@
 *.pdf binary
 *.npz binary
 *.pt binary
+# Preserve the bytes of bundled numerical inputs and the diagram source.
+paper/data/** -text
+paper/diagrams/*.tex -text

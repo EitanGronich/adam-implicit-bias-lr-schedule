@@ -1,0 +1,70 @@
+# MNIST with biases and standard initialization; compare two epsilon values.
+[experiment]
+seed = 2026100901
+output_dir = "runs/comparison"
+dtype = "float64"
+device = "auto"
+threads = 2
+
+[dataset]
+kind = "mnist"
+data_dir = "data"
+per_class = 512
+center = true
+download = false
+
+[model]
+hidden_widths = [512, 512]
+bias = true
+initialization = "torch_default"
+layer_scale = 1.0
+
+[optimizer]
+learning_rate = 0.0003
+beta1 = 0.9
+beta2 = 0.999
+epsilon = 0.0
+
+[run]
+# Stop at the target loss or the configured update budget.
+max_steps = 1000000
+target_loss = 1e-10
+stop_at_target = true
+resume = true
+
+[logging]
+trace_buffer_rows = 1024
+checkpoint_every = 10000
+checkpoint_every_seconds = 600.0
+progress_every = 2500
+full_checkpoint_losses = [1.0, 0.31622776601683794, 0.1, 0.03162277660168379, 0.01, 0.0031622776601683794, 0.001, 0.00031622776601683794, 0.0001, 0.000031622776601683795, 0.00001, 0.000003162277660168379, 0.000001, 0.0000003162277660168379, 0.0000001, 0.000000031622776601683795, 0.00000001, 0.0000000031622776601683795, 0.000000001, 0.00000000031622776601683794, 0.0000000001]
+
+[sweep]
+seeds = [2026100901, 2026100902, 2026100903, 2026100904, 2026100905]
+beta2_values = [0.999]
+epsilon_values = [0.0, 1e-8]
+
+[[schedules]]
+name = "alpha_0_eta3e4"
+alpha = 0.0
+learning_rate = 0.0003
+
+[[schedules]]
+name = "alpha_neg0p10_eta3e4"
+alpha = -0.1
+learning_rate = 0.0003
+
+[[schedules]]
+name = "alpha_neg0p30_eta3e4"
+alpha = -0.3
+learning_rate = 0.0003
+
+[[schedules]]
+name = "alpha_neg0p50_eta3e4"
+alpha = -0.5
+learning_rate = 0.0003
+
+[[schedules]]
+name = "alpha_neg0p70_eta3e4"
+alpha = -0.7
+learning_rate = 0.0003

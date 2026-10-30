@@ -14,8 +14,16 @@ jobs:
       - name: Install CPU PyTorch and package
         run: |
           python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          python -m pip install -e ".[test]"
+          python -m pip install -e ".[test,paper]"
       - name: Mathematical and integration tests
         env:
           MPLBACKEND: Agg
         run: python -m pytest -q
+      - name: Rebuild numerical paper figures from bundled inputs
+        env:
+          MPLBACKEND: Agg
+        run: python paper/figures/render.py --format pdf --skip-tex --output-dir output/ci-paper
+      - name: Check experiment configurations
+        run: |
+          python -m adam_lr.mnist --config configs/mnist/long_horizon.toml --dry-run
+          python -m adam_lr.mnist --config configs/mnist/comparison.toml --dry-run

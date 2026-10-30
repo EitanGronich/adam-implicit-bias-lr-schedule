@@ -1,4 +1,4 @@
-"""Actual discrete Adam trajectories of a homogeneous product model."""
+"""Experimental validation of the width-1 construction from the paper."""
 
 from .config import DirectionalConfig, load_config
 from .model import gradient_and_margins, initialize, margins

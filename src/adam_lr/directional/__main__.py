@@ -1,4 +1,4 @@
-"""CLI: python -m adam_lr.directional --config configs/directional/smoke.toml."""
+"""CLI: python -m adam_lr.directional --config configs/directional/sphere.toml --steps 1000."""
 from __future__ import annotations
 
 import argparse
@@ -11,12 +11,12 @@ from .runner import run
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run actual discrete Adam on the homogeneous product model.")
+    parser = argparse.ArgumentParser(description="Experimental validation of the width-1 construction from the paper using Adam.")
     parser.add_argument("--config", type=Path, help="Readable TOML experiment configuration")
     parser.add_argument("--output", type=Path, help="Override run.output_dir; must be empty or new")
     parser.add_argument("--steps", type=int, help="Override run.steps")
     parser.add_argument("--no-plots", action="store_true")
-    parser.add_argument("--plot-only", type=Path, help="Render diagnostics from an existing run directory")
+    parser.add_argument("--plot-only", type=Path, help="Plot an existing run directory")
     args = parser.parse_args()
     if args.plot_only:
         from .plotting import plot_run

@@ -1,4 +1,4 @@
-"""Conservative numerical health checks for positive product-model trajectories."""
+"""Numerical health checks for positive width-1 construction trajectories."""
 from __future__ import annotations
 
 import torch
@@ -14,7 +14,7 @@ def numerical_issue(theta: torch.Tensor, gradient: torch.Tensor, margins: torch.
     All exact gradient coordinates are strictly negative in this positive sector.
     A represented zero therefore means loss/gradient underflow, unlike a dead ReLU.
     Individual exp(-z_T) terms may round to zero while total gradients remain well
-    resolved; their frequency is separately logged and not called convergence.
+    resolved; the total gradient must remain representable.
     """
     for name, value in (("parameters", theta), ("gradient", gradient),
                         ("margins", margins), ("first_moment", first), ("second_moment", second)):

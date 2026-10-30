@@ -15,6 +15,10 @@ tmp/
 *.pt
 *.pth
 *.npz
+# Small processed inputs needed to rebuild the paper figures.
+!paper/data/
+!paper/data/**/
+!paper/data/**/*.npz
 *.log
 .env
 .DS_Store

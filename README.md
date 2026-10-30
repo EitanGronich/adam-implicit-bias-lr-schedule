@@ -1,80 +1,86 @@
-# Adam implicit bias and learning-rate schedules
+# Watch Your Step: Adam's Margin Maximization Bias Depends on the Learning Rate Schedule
 
-Two experiment families using **actual, bias-corrected discrete Adam**:
+Experiments and figure code for the paper by Eitan Gronich and Gal Vardi.
+The experiments compare Adam learning-rate schedules
+`eta_k = eta_0 * k**alpha`, starting at update `k = 1`.
 
-1. Full-batch odd/even MNIST classification with bias-free homogeneous ReLU networks. The main presets use three weight layers, widths `784 → 1024 → 1024 → 1`, and 1,024 training examples. Logging includes loss, margins, parameter/gradient/moment geometry, fixed coordinate panels, loss-triggered snapshots, and optional log-space second-moment traces.
-2. Low-dimensional homogeneous product models for observing directional behavior. Directions and their changes are measured from trained parameter vectors. This package contains no ODE solver and no frozen-weight formula for predicting a limiting direction.
+## Installation
 
-The original source folders are preserved separately. This repository contains source, configurations, tests, and documentation; datasets, checkpoints, and generated figures are excluded from Git.
+Use Python 3.12 and a PyTorch installation suitable for your CPU or GPU:
 
-## Install
-
-Use Python 3.11 or newer and a suitable PyTorch installation for your CPU/GPU:
-
-```bash
-python -m venv .venv
-# Activate .venv using your shell, then:
-python -m pip install -e ".[test]"
-python -m pytest
+```sh
+git clone https://github.com/EitanGronich/adam-implicit-bias-lr-schedule.git
+cd adam-implicit-bias-lr-schedule
+python -m pip install -e ".[test,paper]"
 ```
 
-All commands below run from the repository root. Relative data/output paths are interpreted from the current working directory. Configuration files are ordinary TOML with named sections; unknown keys are rejected to catch misspellings.
+A GPU is recommended for full MNIST runs. Figure rendering runs on CPU.
 
-## Start with small runs
+## Run a new MNIST experiment
 
-```bash
-python -m adam_lr.mnist --config configs/mnist/smoke.toml
-python -m adam_lr.directional --config configs/directional/smoke.toml
+Choose a preset, copy it, and edit its TOML settings:
+
+| Preset | Model | Initialization scale | Adam epsilon |
+|---|---|---|---|
+| `configs/mnist/long_horizon.toml` | Bias-free ReLU network | `1e-4` | `0` |
+| `configs/mnist/comparison.toml` | ReLU network with biases | `1` | `0`, `1e-8` |
+
+```sh
+python -m adam_lr.mnist --config configs/mnist/comparison.toml
 ```
 
-The first command uses synthetic data to exercise the MNIST pipeline without a download. For a real-MNIST execution check, use `configs/mnist/real_smoke.toml` and point `--data-dir` at a directory containing `MNIST/raw/`. To download MNIST, explicitly set `dataset.download = true` in the MNIST configuration.
+The configuration controls the dataset, network widths and biases, initialization,
+Adam parameters, schedule exponents, seeds, stopping rules, and logging.
+The supplied presets use 1,024 MNIST images and a `784 -> 512 -> 512 -> 1`
+network. Set `dataset.download = true` to download MNIST, or point
+`dataset.data_dir` to a directory containing `MNIST/raw/`.
 
-```bash
-python -m adam_lr.mnist --config configs/mnist/real_smoke.toml --data-dir data
-python -m adam_lr.mnist --config configs/mnist/three_layer_eta3e4.toml
+For a short check of one configuration:
+
+```sh
+python -m adam_lr.mnist --config configs/mnist/comparison.toml --seed 2026100901 --schedule alpha_neg0p30_eta3e4 --epsilon 1e-8 --max-steps 100 --output-dir runs/check
+python -m adam_lr.mnist.plot runs/check --output-dir output/check
 ```
 
-Production presets are long experiments, not smoke tests. Their per-schedule iteration budgets are visible in the TOML. See [MNIST experiments](docs/mnist.md) and [directional simulations](docs/directional.md) for commands, plotting, field definitions, outputs, and resume behavior.
+The runner saves configuration, the training trace, and checkpoints for each run.
+With `run.resume = true`, running the same command continues an existing run.
+See [MNIST experiments](docs/mnist.md) for configuration and output details.
 
-Plot any saved scalar fields, anchor cosines, and coordinate traces without rerunning training. The [incoming-moment analysis](docs/incoming_analysis.md) also preserves the original adjacent-transition calculation, with undefined transitions kept as gaps.
+## Run a width-1 experiment
 
-## What is configurable?
+```sh
+python -m adam_lr.directional --config configs/directional/sphere.toml
+```
 
-| Choice | MNIST | Directional model |
-|---|---|---|
-| Depth | `model.hidden_widths`: number of weight layers is length + 1 | `model.layers` |
-| Width/geometry | Any positive hidden widths, including unequal widths | Two input coordinates and depth-dependent scalar factors |
-| Training points | `dataset.per_class` points in each parity class | Two explicitly specified model examples |
-| Initialization | Method, scale, standard deviation, seed | Initialization scale and control-grid bounds |
-| Optimizer | Beta values; fixed or explicitly rescaled beta policy | Beta values and epsilon |
-| Learning rate | Base rate and power per named schedule | Base rate and schedule power |
-| Run budget | Global and per-schedule steps, target loss | Iteration budget |
-| Observation | Logging intervals, coordinate count, loss snapshots, checkpoints | Sampling interval and empirical direction diagnostics |
-| Computation | CPU/GPU, float32/float64, thread count | CPU/GPU, float32/float64, thread count |
+Edit the model, initialization controls, optimizer, and schedule in the TOML
+file to run a different experiment. See [width-1 experiments](docs/directional.md).
 
-For both families the schedule is
+## Render figures
 
-\[
-\eta_t=\eta_0 t^{-p},\qquad t=1,2,\ldots.
-\]
+The bundled data contain one archive for each MNIST experiment and a table of
+width-1 endpoint directions. Render the paper figures with:
 
-The first update therefore uses `eta_0`. The learning rate multiplies the Adam update. Fixed betas remain fixed throughout a trajectory; changing the learning-rate schedule does not implicitly rescale them. MNIST's optional legacy beta policy is documented separately and recorded in run metadata.
+```sh
+python paper/figures/render.py --output-dir output/paper
+```
 
-## Numerical interpretation
+The schematic requires XeLaTeX with TikZ and the `standalone` class. Add
+`--skip-tex` to render only numerical figures, or `--format both` for PNGs too.
+[Figure preparation](docs/paper.md) explains how to prepare the same plots from
+a new experiment.
 
-Epsilon-free Adam has a defined zero update for coordinates with an exactly zero gradient history. A nonzero gradient/momentum with a zero represented denominator is a failure, not convergence. The shared optimizer rejects nonfinite inputs and invalid proposals before committing an update. The directional runner additionally checks exponential-loss and second-moment representability.
+## Development
 
-Finite-time angular drift and endpoint clouds are observations. They do not certify an asymptotic directional limit or coverage of an entire open set. A coordinate-permuted directional sector also permutes the data; combined sectors must not be interpreted as one fixed dataset.
-
-See [audit findings](docs/audit_findings.md) for confirmed source bugs, their consequences, and limitations, and [validation](docs/validation.md) for the checks actually performed. Full production sweeps must be rerun before using changed diagnostics in a paper.
-
-## Layout
+```sh
+python -m pytest -q
+```
 
 ```text
-configs/                readable small-run and research presets
-src/adam_lr/optim/      shared discrete Adam and schedule
-src/adam_lr/mnist/      model, data, runner, diagnostics, logging, plotting
-src/adam_lr/directional/ product model, runner, empirical diagnostics, plotting
-tests/                  mathematical, numerical, configuration, and resume tests
-docs/                   experiment definitions, provenance, audit, validation
+configs/        Experiment settings
+src/adam_lr/    Optimizers, training, and trace storage
+paper/data/     Figure inputs, grouped by experiment
+paper/figures/  Data preparation and plotting
+paper/diagrams/ TikZ schematic
+tests/          Numerical and integration tests
+docs/           Experiment instructions
 ```

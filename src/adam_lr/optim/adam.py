@@ -3,7 +3,7 @@
 At update t>=1: g_t=grad(loss)(theta_{t-1}); m_t=beta1*m_{t-1}
 + (1-beta1)*g_t; v_t=beta2*v_{t-1}+(1-beta2)*g_t**2; and
 theta_t=theta_{t-1}-eta_t*(m_t/(1-beta1**t))/(sqrt(v_t/(1-beta2**t))+eps).
-There is no weight decay, gradient rescaling, or continuous-time integration.
+The update uses the supplied learning rate with fixed decay rates and no weight decay.
 """
 
 from __future__ import annotations
@@ -35,20 +35,20 @@ def logistic_loss_and_logits(model: nn.Module, x: torch.Tensor,
     return F.softplus(-labels * logits).mean(), logits
 
 
-def schedule_learning_rate(initial_rate: float, power: float, step: int) -> float:
-    """eta_t=initial_rate*t**(-power), with the first update numbered t=1.
+def schedule_learning_rate(initial_rate: float, alpha: float, step: int) -> float:
+    """eta_t=initial_rate*t**alpha, with the first update numbered t=1.
 
-    A positive power decays, zero is constant, and a negative power grows.
+    A negative alpha decays, zero is constant, and a positive alpha grows.
     The schedule multiplies the Adam update; it does not change the betas.
     """
     if isinstance(step, bool) or not isinstance(step, int) or step <= 0:
         raise ValueError("Adam step must be a positive integer")
     if not math.isfinite(initial_rate) or initial_rate < 0:
         raise ValueError("initial_rate must be finite and nonnegative")
-    if not math.isfinite(power):
-        raise ValueError("power must be finite")
+    if not math.isfinite(alpha):
+        raise ValueError("alpha must be finite")
     try:
-        rate = initial_rate * step ** (-power)
+        rate = initial_rate * step ** alpha
     except OverflowError as error:
         raise ValueError("learning-rate schedule overflowed") from error
     if not math.isfinite(rate) or (initial_rate > 0 and rate == 0):
@@ -125,23 +125,3 @@ class InspectableAdam:
             first.copy_(next_first)
             second.copy_(next_second)
         self.step_count = step
-
-    @torch.no_grad()
-    def flattened_state(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Return m_hat_t, sqrt(v_hat_t), and the Adam denominator at theta_t."""
-        if self.step_count == 0:
-            zero = torch.cat([torch.zeros_like(p).reshape(-1) for p in self.parameters])
-            return zero, zero.clone(), zero + self.epsilon
-        c1, c2 = 1-self.beta1**self.step_count, 1-self.beta2**self.step_count
-        first_hat = torch.cat([m.reshape(-1)/c1 for m in self.first])
-        root_second = torch.cat([(v/c2).sqrt().reshape(-1) for v in self.second])
-        return first_hat, root_second, root_second + self.epsilon
-
-    def serializable_state(self, model: nn.Module) -> dict:
-        named = list(model.named_parameters())
-        if [id(p) for _, p in named] != [id(p) for p in self.parameters]:
-            raise ValueError("model parameter order differs from optimizer parameter order")
-        return {"step": self.step_count, "beta1": self.beta1, "beta2": self.beta2,
-                "epsilon": self.epsilon,
-                "first_moment": {name: m.detach().clone() for (name, _), m in zip(named, self.first)},
-                "second_moment": {name: v.detach().clone() for (name, _), v in zip(named, self.second)}}

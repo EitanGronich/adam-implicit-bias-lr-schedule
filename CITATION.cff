@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the accompanying paper."
+title: "Watch Your Step: Adam's Margin Maximization Bias Depends on the Learning Rate Schedule"
+type: software
+authors:
+  - family-names: Gronich
+    given-names: Eitan
+  - family-names: Vardi
+    given-names: Gal
+repository-code: "https://github.com/EitanGronich/adam-implicit-bias-lr-schedule"

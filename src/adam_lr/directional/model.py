@@ -1,10 +1,4 @@
-"""Homogeneous model and the initialization family, without limit formulas.
-
-Each row is an independent run with theta=(u1,u2,b1,...,b_{L-1}).
-Its objective is the SUM exp(-z_S)+exp(-z_T), with both labels +1.
-"""
-from __future__ import annotations
-
+"""Width-1 product model, canonical initialization, and analytic gradients."""
 from dataclasses import dataclass
 import numpy as np
 import torch
@@ -16,48 +10,51 @@ from .config import DirectionalConfig, ModelConfig
 class InitialState:
     theta: torch.Tensor
     swapped: torch.Tensor
-    controls: torch.Tensor  # columns s, ell_1, ..., ell_{L-1}
-    beta: torch.Tensor  # beta_0,...,beta_{L-1}, product exactly C in real arithmetic
+    controls: torch.Tensor
+    pi: torch.Tensor
 
 
 def initialize(config: DirectionalConfig) -> InitialState:
     config.validate()
-    cfg, ini = config.model, config.initialization
-    lower = np.array([ini.s_min] + [ini.ell_min] * (cfg.layers - 1))
-    upper = np.array([ini.s_max] + [ini.ell_max] * (cfg.layers - 1))
-    if ini.sampling == "grid":
-        # One grid point means the midpoint, not an arbitrary lower corner.
-        axes = [np.linspace(a, b, ini.grid_size) if ini.grid_size > 1 else np.array([(a+b)/2])
-                for a, b in zip(lower, upper)]
-        controls = np.stack(np.meshgrid(*axes, indexing="ij"), axis=-1).reshape(-1, cfg.layers)
+    model, initial = config.model, config.initialization
+    z_min, z_max, pi_min, pi_max = initial.control_bounds(model)
+    lower = np.array([z_min] + [pi_min] * (model.layers - 1))
+    upper = np.array([z_max] + [pi_max] * (model.layers - 1))
+    if initial.sampling == "grid":
+        values = [initial.z_values] + [initial.pi_values] * (model.layers - 1)
+        axes = [np.asarray(explicit, dtype=float) if explicit is not None else
+                np.linspace(a, b, initial.grid_size) if initial.grid_size > 1 else np.array([(a+b)/2])
+                for a, b, explicit in zip(lower, upper, values)]
+        controls = np.stack(np.meshgrid(*axes, indexing="ij"), axis=-1).reshape(-1, model.layers)
+    elif initial.sampling == "explicit":
+        controls = np.asarray(initial.control_points, dtype=float)
     else:
-        controls = np.random.default_rng(ini.seed).uniform(lower, upper, size=(ini.sample_count, cfg.layers))
-    dtype = getattr(torch, config.run.dtype)
-    control = torch.tensor(controls, dtype=dtype, device=config.run.device)
-    beta0 = cfg.C ** (1 / cfg.layers) * torch.exp(-2 * control[:, 1:].sum(dim=-1) / cfg.layers)
-    beta = torch.cat([beta0[:, None], beta0[:, None] * torch.exp(2 * control[:, 1:])], dim=-1)
-    a = (1 + control[:, 0] / ini.rho ** cfg.layers) / cfg.M
-    u = ini.rho * beta0[:, None] * torch.stack([a, 1 - cfg.B * a], dim=-1)
-    theta = torch.cat([u, ini.rho * beta[:, 1:]], dim=-1)
+        controls = np.random.default_rng(initial.seed).uniform(lower, upper, size=(initial.sample_count, model.layers))
+    control = torch.tensor(controls, dtype=getattr(torch, config.run.dtype), device=config.run.device)
+    factors = control[:, 1:]
+    pi0 = model.Lambda / factors.prod(dim=-1)
+    pi = torch.cat([pi0[:, None], factors], dim=-1)
+    a = (1 + control[:, 0] / initial.rho ** model.layers) / model.M
+    u = initial.rho * pi0[:, None] * torch.stack([a, 1 - model.B * a], dim=-1)
+    theta = torch.cat([u, initial.rho * pi[:, 1:]], dim=-1)
     if not torch.isfinite(theta).all() or not (theta > 0).all():
-        raise ValueError("initial parameters overflowed/underflowed: narrow ell bounds or change dtype")
+        raise ValueError("initial parameters are not representable: narrow pi bounds or change dtype")
     count = len(theta)
-    if ini.sectors == "both":
+    if initial.sectors == "both":
         theta = torch.cat([theta, torch.cat([theta[:, [1, 0]], theta[:, 2:]], dim=-1)])
-        control = torch.cat([control, control])
-        beta = torch.cat([beta, beta])
+        control, pi = torch.cat([control, control]), torch.cat([pi, pi])
         swapped = torch.arange(2 * count, device=theta.device) >= count
-    elif ini.sectors == "swapped":
+    elif initial.sectors == "swapped":
         theta = torch.cat([theta[:, [1, 0]], theta[:, 2:]], dim=-1)
         swapped = torch.ones(count, dtype=torch.bool, device=theta.device)
     else:
         swapped = torch.zeros(count, dtype=torch.bool, device=theta.device)
-    return InitialState(theta, swapped, control, beta)
+    return InitialState(theta, swapped, control, pi)
 
 
 def dataset(swapped: torch.Tensor, config: ModelConfig, dtype: torch.dtype) -> torch.Tensor:
     """N independent pairs of examples, shape (N,2,2); swaps inputs with u."""
-    base = torch.tensor([[config.B, 1.0], [config.M, 0.0]], dtype=dtype, device=swapped.device) / config.C
+    base = torch.tensor([[config.B, 1.0], [config.M, 0.0]], dtype=dtype, device=swapped.device) / config.Lambda
     expanded = base.expand(len(swapped), -1, -1)
     return torch.where(swapped[:, None, None], expanded.flip(-1), expanded)
 
@@ -96,10 +93,3 @@ def normalize(vectors: torch.Tensor) -> torch.Tensor:
         raise ValueError("direction is undefined for zero/nonfinite vectors")
     scaled = vectors / scale
     return scaled / torch.linalg.vector_norm(scaled, dim=-1, keepdim=True)
-
-
-def angle_degrees(first: torch.Tensor, second: torch.Tensor) -> torch.Tensor:
-    """Stable small-angle distance; arguments need not already be unit vectors."""
-    a, b = normalize(first), normalize(second)
-    return torch.rad2deg(2 * torch.atan2(torch.linalg.vector_norm(a-b, dim=-1),
-                                        torch.linalg.vector_norm(a+b, dim=-1)))

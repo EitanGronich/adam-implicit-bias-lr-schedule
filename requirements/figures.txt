@@ -1,0 +1,6 @@
+# Direct dependencies from the environment used to verify the paper renderer.
+# Install after selecting a CPU or CUDA PyTorch build for the editable package.
+numpy==2.5.2
+matplotlib==3.10.6
+ultraplot==2.6.0
+pymupdf==1.28.2

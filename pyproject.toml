@@ -5,13 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "adam-implicit-bias-lr-schedule"
 version = "0.1.0"
-description = "Discrete Adam learning-rate-schedule experiments on homogeneous MNIST networks and directional dynamics"
+description = "Experiments and figure reproduction for Watch Your Step: Adam's Margin Maximization Bias Depends on the Learning Rate Schedule"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = ["numpy>=1.26", "torch>=2.2", "torchvision>=0.17", "matplotlib>=3.8"]
 
 [project.optional-dependencies]
 test = ["pytest>=8"]
+paper = ["ultraplot>=2.6,<3", "matplotlib>=3.9,<3.11", "pymupdf>=1.26,<2"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
